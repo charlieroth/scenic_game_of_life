@@ -5,7 +5,7 @@ use Mix.Config
 # Configure the main viewport for the Scenic application
 config :game_of_life, :viewport, %{
   name: :main_viewport,
-  size: {700, 800},
+  size: {600, 600},
   default_scene: {GameOfLife.Scene.TheGrid, nil},
   drivers: [
     %{
