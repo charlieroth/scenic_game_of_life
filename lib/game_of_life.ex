@@ -1,8 +1,4 @@
 defmodule GameOfLife do
-  @moduledoc """
-  Starter application using the Scenic framework.
-  """
-
   def start(_type, _args) do
     # load the viewport configuration from config
     main_viewport_config = Application.get_env(:game_of_life, :viewport)

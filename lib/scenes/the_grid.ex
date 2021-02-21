@@ -10,23 +10,31 @@ defmodule GameOfLife.Scene.TheGrid do
   def init(_, opts) do
     viewport = opts[:viewport]
 
-    cells = generate_cells(30, 30)
+    l = 30
+    w = 30
+    cells = generate_cells(l, w)
+    graph = render_grid(cells)
 
-    graph =
-      Graph.build(font: :roboto, font_size: 24, theme: :light)
-      |> render_grid(cells)
-
-    world = %{
+    state = %{
       viewport: viewport,
       graph: graph,
-      state: %{
-        num_alive: 3,
-        epoch: 0,
-        cells: {}
-      }
+      epoch: 0,
+      cells: cells
     }
 
-    {:ok, world, push: graph}
+    :timer.send_interval(300, {:evolve, l, w})
+
+    {:ok, state, push: graph}
+  end
+
+  def handle_info({:evolve, l, w}, state) do
+    IO.puts("Epoch: #{state.epoch}")
+    new_epoch = state.epoch + 1
+
+    new_cells = evolution(l, w, state.cells)
+    new_graph = render_grid(new_cells)
+    new_state = %{state | cells: new_cells, epoch: new_epoch, graph: new_graph}
+    {:noreply, new_state, push: new_graph}
   end
 
   def filter_event({:click, :start_btn_id}, _from, world) do
@@ -34,14 +42,81 @@ defmodule GameOfLife.Scene.TheGrid do
     {:noreply, world}
   end
 
+  def evolution(l, w, cells) do
+    Enum.reduce(cells, %{}, fn cell, acc ->
+      {pos, new_cell} = evolve_cell(l, w, cells, cell)
+      Map.put(acc, pos, new_cell)
+    end)
+  end
+
+  def evolve_cell(l, w, cells, {pos, c} = cell) do
+    neighbors_alive =
+      cell
+      |> get_neighbor_positions()
+      |> get_num_neighbors_alive(cells, l, w)
+
+    case {c.alive, neighbors_alive} do
+      # 1. Any live cell with fewer than two live neighbors dies
+      {true, na} when na < 2 -> {pos, %Cell{c | alive: false}}
+      # 2. Any live cell with two or three live neighbors lives
+      {true, na} when na == 2 -> cell
+      {true, na} when na == 3 -> cell
+      # 3. Any live cell with more than three live neighbors dies
+      {true, na} when na > 3 -> {pos, %Cell{c | alive: false}}
+      # 4. Any dead cell with exactly three live neighbors becomes a live cell
+      {false, na} when na === 3 -> {pos, %Cell{c | alive: true}}
+      _ -> cell
+    end
+  end
+
+  def get_num_neighbors_alive(neighbor_positions, cells, l, w) do
+    lb = l - 1
+    wb = w - 1
+
+    Enum.reduce(neighbor_positions, 0, fn {x, y} = _neighbor_pos, count ->
+      # Ensure checking only in bounds neighbors
+      case {x <= wb, x >= 0, y <= lb, y >= 0} do
+        {true, true, true, true} ->
+          cell = cells[{x, y}]
+          if cell.alive, do: count + 1, else: count
+
+        _ ->
+          count
+      end
+    end)
+  end
+
+  def get_neighbor_positions({{x, y} = _pos, _} = _cell) do
+    [
+      # top-left
+      {x - 1, y - 1},
+      # top-center
+      {x, y - 1},
+      # top-right
+      {x + 1, y - 1},
+      # middle-left
+      {x - 1, y},
+      # middle-right
+      {x + 1, y},
+      # bottom-left
+      {x - 1, y + 1},
+      # bottom-center
+      {x, y + 1},
+      # bottom-right
+      {x + 1, y + 1}
+    ]
+  end
+
   def generate_cells(l, w) do
     for x <- 0..w, y <- 0..l, into: %{} do
       {{x, y}, %Cell{alive: false, translation: generate_translation(x, y)}}
     end
-    |> insert_blinker()
+    |> spawn_glider()
   end
 
-  def render_grid(graph, cells) do
+  def render_grid(cells) do
+    graph = Graph.build(theme: :light)
+
     Enum.reduce(cells, graph, fn {_pos, cell}, acc ->
       if cell.alive do
         acc
@@ -53,8 +128,8 @@ defmodule GameOfLife.Scene.TheGrid do
     end)
   end
 
-  def insert_blinker(cells) do
-    Enum.reduce(cells, %{}, fn {pos, c} = _cell, acc ->
+  def spawn_blinker(cells) do
+    Enum.reduce(cells, cells, fn {pos, c} = _cell, acc ->
       case pos do
         {14, 15} ->
           Map.put(acc, pos, %Cell{c | alive: true})
@@ -63,6 +138,30 @@ defmodule GameOfLife.Scene.TheGrid do
           Map.put(acc, pos, %Cell{c | alive: true})
 
         {16, 15} ->
+          Map.put(acc, pos, %Cell{c | alive: true})
+
+        _ ->
+          acc
+      end
+    end)
+  end
+
+  def spawn_glider(cells) do
+    Enum.reduce(cells, cells, fn {pos, c} = _cell, acc ->
+      case pos do
+        {14, 14} ->
+          Map.put(acc, pos, %Cell{c | alive: true})
+
+        {16, 14} ->
+          Map.put(acc, pos, %Cell{c | alive: true})
+
+        {15, 15} ->
+          Map.put(acc, pos, %Cell{c | alive: true})
+
+        {16, 15} ->
+          Map.put(acc, pos, %Cell{c | alive: true})
+
+        {15, 16} ->
           Map.put(acc, pos, %Cell{c | alive: true})
 
         _ ->
