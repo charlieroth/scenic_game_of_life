@@ -1,4 +1,3 @@
-Readme text goes here
+# Game Of Life
 
-
-From template
+Game Of Life built with Scenic
