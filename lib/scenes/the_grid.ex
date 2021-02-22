@@ -22,24 +22,31 @@ defmodule GameOfLife.Scene.TheGrid do
       cells: cells
     }
 
-    :timer.send_interval(300, {:evolve, l, w})
+    :timer.send_interval(200, {:evolve, l, w})
 
     {:ok, state, push: graph}
   end
 
   def handle_info({:evolve, l, w}, state) do
-    IO.puts("Epoch: #{state.epoch}")
     new_epoch = state.epoch + 1
-
     new_cells = evolution(l, w, state.cells)
     new_graph = render_grid(new_cells)
     new_state = %{state | cells: new_cells, epoch: new_epoch, graph: new_graph}
     {:noreply, new_state, push: new_graph}
   end
 
-  def filter_event({:click, :start_btn_id}, _from, world) do
-    IO.puts("Start button clicked")
-    {:noreply, world}
+  def render_grid(cells) do
+    graph = Graph.build(theme: :light)
+
+    Enum.reduce(cells, graph, fn {_pos, cell}, acc ->
+      if cell.alive do
+        acc
+        |> rectangle({20, 20}, fill: :black, translate: cell.translation)
+      else
+        acc
+        |> rectangle({20, 20}, fill: :white, translate: cell.translation)
+      end
+    end)
   end
 
   def evolution(l, w, cells) do
@@ -70,14 +77,11 @@ defmodule GameOfLife.Scene.TheGrid do
   end
 
   def get_num_neighbors_alive(neighbor_positions, cells, l, w) do
-    lb = l - 1
-    wb = w - 1
-
-    Enum.reduce(neighbor_positions, 0, fn {x, y} = _neighbor_pos, count ->
+    Enum.reduce(neighbor_positions, 0, fn {x, y} = neighbor_position, count ->
       # Ensure checking only in bounds neighbors
-      case {x <= wb, x >= 0, y <= lb, y >= 0} do
+      case {x <= w - 1, x >= 0, y <= l - 1, y >= 0} do
         {true, true, true, true} ->
-          cell = cells[{x, y}]
+          cell = cells[neighbor_position]
           if cell.alive, do: count + 1, else: count
 
         _ ->
@@ -86,7 +90,7 @@ defmodule GameOfLife.Scene.TheGrid do
     end)
   end
 
-  def get_neighbor_positions({{x, y} = _pos, _} = _cell) do
+  def get_neighbor_positions({{x, y} = _pos, _c} = _cell) do
     [
       # top-left
       {x - 1, y - 1},
@@ -112,20 +116,6 @@ defmodule GameOfLife.Scene.TheGrid do
       {{x, y}, %Cell{alive: false, translation: generate_translation(x, y)}}
     end
     |> spawn_glider()
-  end
-
-  def render_grid(cells) do
-    graph = Graph.build(theme: :light)
-
-    Enum.reduce(cells, graph, fn {_pos, cell}, acc ->
-      if cell.alive do
-        acc
-        |> rectangle({20, 20}, fill: :black, translate: cell.translation)
-      else
-        acc
-        |> rectangle({20, 20}, fill: :white, translate: cell.translation)
-      end
-    end)
   end
 
   def spawn_blinker(cells) do
