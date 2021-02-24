@@ -3,9 +3,7 @@ defmodule GameOfLife.Scene.TheGrid do
   require Logger
   alias Scenic.Graph
   alias GameOfLife.Cell
-  # alias Scenic.ViewPort
   import Scenic.Primitives
-  # import Scenic.Components
 
   def init(_, opts) do
     viewport = opts[:viewport]
@@ -23,6 +21,7 @@ defmodule GameOfLife.Scene.TheGrid do
     }
 
     :timer.send_interval(200, {:evolve, l, w})
+    :timer.send_interval(2000, {:glider})
 
     {:ok, state, push: graph}
   end
@@ -32,6 +31,13 @@ defmodule GameOfLife.Scene.TheGrid do
     new_cells = evolution(l, w, state.cells)
     new_graph = render_grid(new_cells)
     new_state = %{state | cells: new_cells, epoch: new_epoch, graph: new_graph}
+    {:noreply, new_state, push: new_graph}
+  end
+
+  def handle_info({:glider}, state) do
+    new_cells = spawn_glider(state.cells)
+    new_graph = render_grid(new_cells)
+    new_state = %{state | cells: new_cells, graph: new_graph}
     {:noreply, new_state, push: new_graph}
   end
 
