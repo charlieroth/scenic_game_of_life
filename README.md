@@ -2,4 +2,4 @@
 
 Game Of Life built with Scenic
 
-[Screen shot](./ScreenShot.png)
+[Screenshot](https://github.com/charlieroth/scenic_game_of_life/blob/main/ScreenShot.png?raw=true)
