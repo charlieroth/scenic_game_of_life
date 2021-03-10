@@ -1,8 +1,11 @@
 defmodule GameOfLife.Scene.TheGrid do
   use Scenic.Scene
+
   require Logger
+
   alias Scenic.Graph
   alias GameOfLife.Cell
+
   import Scenic.Primitives
 
   def init(_, opts) do

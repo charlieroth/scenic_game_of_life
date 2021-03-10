@@ -25,6 +25,7 @@ defmodule GameOfLife.MixProject do
     [
       {:scenic, "~> 0.10"},
       {:scenic_driver_glfw, "~> 0.10", targets: :host},
+      {:credo, "~> 1.5"}
     ]
   end
 end
