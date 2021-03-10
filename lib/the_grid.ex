@@ -1,4 +1,9 @@
 defmodule GameOfLife.TheGrid do
+  @moduledoc """
+  Grid Scene
+
+  Handles lifecycle of the Game of Life
+  """
   use Scenic.Scene
 
   require Logger
