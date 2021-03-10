@@ -1,4 +1,4 @@
-defmodule GameOfLife.Scene.TheGrid do
+defmodule GameOfLife.TheGrid do
   use Scenic.Scene
 
   require Logger

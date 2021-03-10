@@ -6,7 +6,7 @@ use Mix.Config
 config :game_of_life, :viewport, %{
   name: :main_viewport,
   size: {620, 620},
-  default_scene: {GameOfLife.Scene.TheGrid, nil},
+  default_scene: {GameOfLife.TheGrid, nil},
   drivers: [
     %{
       module: Scenic.Driver.Glfw,
