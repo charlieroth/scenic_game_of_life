@@ -73,8 +73,8 @@ defmodule GameOfLife.TheGrid do
   def evolve_cell(l, w, cells, {pos, c} = cell) do
     neighbors_alive =
       cell
-      |> get_neighbor_positions()
-      |> get_num_neighbors_alive(cells, l, w)
+      |> neighbor_positions()
+      |> num_neighbors_alive(cells, l, w)
 
     case {c.alive, neighbors_alive} do
       # 1. Any live cell with fewer than two live neighbors dies
@@ -90,9 +90,9 @@ defmodule GameOfLife.TheGrid do
     end
   end
 
-  def get_num_neighbors_alive(neighbor_positions, cells, l, w) do
+  def num_neighbors_alive(neighbor_positions, cells, l, w) do
     Enum.reduce(neighbor_positions, 0, fn {x, y} = neighbor_position, count ->
-      # Ensure checking only in bounds neighbors
+      # Checking only in bounds neighbors
       case {x <= w - 1, x >= 0, y <= l - 1, y >= 0} do
         {true, true, true, true} ->
           cell = cells[neighbor_position]
@@ -104,7 +104,7 @@ defmodule GameOfLife.TheGrid do
     end)
   end
 
-  def get_neighbor_positions({{x, y} = _pos, _c} = _cell) do
+  def neighbor_positions({{x, y} = _pos, _c} = _cell) do
     [
       # top-left
       {x - 1, y - 1},
@@ -130,6 +130,10 @@ defmodule GameOfLife.TheGrid do
       {{x, y}, %Cell{alive: false, translation: generate_translation(x, y)}}
     end
     |> spawn_glider()
+  end
+
+  def generate_translation(x, y) do
+    {x * 20, y * 20}
   end
 
   def spawn_blinker(cells) do
@@ -174,7 +178,6 @@ defmodule GameOfLife.TheGrid do
     end)
   end
 
-  def generate_translation(x, y) do
-    {x * 20, y * 20}
-  end
+  # def glider_pos() do
+  # end
 end
